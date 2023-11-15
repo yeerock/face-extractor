@@ -116,7 +116,7 @@ document.getElementById('log').innerHTML += 'Models loaded successfully. Loading
                     // Limit the number of detected faces to the selected maxFaces
                     const limitedDetections = detections.slice(0, maxFaces);
 
-                    document.getElementById('log').innerHTML += `Detected ${limitedDetections.length} face(s).<br><br>Try selecting the 'Full Version Face Detector Model' if an incorrect number of faces is detected!`;
+                    document.getElementById('log').innerHTML += `Detected ${limitedDetections.length} face(s).<br><br>Try selecting the "Full Version Face Detector Model" or adjust the "Max Faces Detection Capacity" value if an incorrect number of faces is detected!`;
 
                     // Display only the extracted detected faces
                     const facesContainer = document.getElementById('faces');
