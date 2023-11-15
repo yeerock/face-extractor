@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection</title>
+    <script defer src="face-api.js"></script>
+</head>
+<body>
+    <h1>Face Detection & Extraction</h1>
+    <div>
+        <label for="imageSelector">Select Image:</label>
+        <select id="imageSelector" onchange="changeImageAndDetect()">
+            <option value="faces1.jpg">Faces #1 - 10 VYROX People</option>
+            <option value="faces2.jpg">Faces #2 - 4 Strangers</option>
+            <option value="faces3.jpg">Faces #3 - 26 TVB Artists</option>
+        </select>
+        <div>
+            <img id="selectedImage" style="max-width: 400px; max-height: 400px; margin-top: 10px;" />
+        </div>
+    </div>
+    <div>
+        <label for="modelToggle"><br>Select Model:</label>
+        <select id="modelToggle" onchange="toggleModelAndDetect()">
+            <option value="tiny">Tiny Face Detector Model (fast but less accurate)</option>
+            <option value="full">Full Version Face Detector Model (slow but very accurate)</option>
+        </select>
+    </div>
+    <div>
+        <label for="maxFacesSlider">Adjust Max Faces Detection Capacity :</label>
+        <input type="range" id="maxFacesSlider" min="1" max="30" value="12" step="1" onchange="changeMaxFaces()">
+        <span id="maxFacesValue">12</span>
+    </div>
+    <div>
+        <label for="marginSlider">Adjust Crop Margin (a larger value indicates a larger region of the face surrounding the captured image):</label>
+        <input type="range" id="marginSlider" min="0" max="1" value="0.5" step="0.1" onchange="changeMargin()">
+        <span id="marginValue">0.5</span>
+    </div>
+    <div id="log"></div>
+    <div id="faces"></div>
+
+    <script>
+        let selectedModel = 'tiny';
+        let selectedImage = 'faces1.jpg';
+        let maxFaces = 12;
+        let margin = 0.5;
+
+           async function changeImageAndDetect() {
+            document.getElementById('log').innerHTML = ''; // Clear log
+            document.getElementById('faces').innerHTML = ''; // Clear faces
+
+            selectedImage = document.getElementById('imageSelector').value;
+            document.getElementById('selectedImage').src = selectedImage; // Display selected image
+document.getElementById('log').innerHTML += '<br>Sample image for test changed!<br>';
+            detectFaces();
+        }
+
+        async function toggleModelAndDetect() {
+            document.getElementById('log').innerHTML = ''; // Clear log
+            document.getElementById('faces').innerHTML = ''; // Clear faces
+
+            selectedModel = document.getElementById('modelToggle').value;
+document.getElementById('log').innerHTML += '<br>Face Detector Model changed!<br>';
+            detectFaces();
+        }
+
+        function changeMaxFaces() {
+
+            document.getElementById('log').innerHTML = ''; // Clear log
+            document.getElementById('faces').innerHTML = ''; // Clear faces
+
+            maxFaces = document.getElementById('maxFacesSlider').value;
+            document.getElementById('maxFacesValue').innerHTML = maxFaces;
+document.getElementById('log').innerHTML += '<br>Max Faces Detection Capacity value updated!<br>';
+            detectFaces();
+
+        }
+
+        function changeMargin() {
+            document.getElementById('log').innerHTML = ''; // Clear log
+            document.getElementById('faces').innerHTML = ''; // Clear faces
+
+            margin = document.getElementById('marginSlider').value;
+            document.getElementById('marginValue').innerHTML = margin;
+document.getElementById('log').innerHTML += '<br>Crop Margin value updated!<br>';
+            detectFaces();
+        }
+
+        async function detectFaces() {
+            try {
+                // Load face detection models based on the selected model
+document.getElementById('log').innerHTML += '<br>Loading Face Detector model...<br>';
+                if (selectedModel === 'tiny') {
+                    await faceapi.nets.tinyFaceDetector.loadFromUri('models');
+                } else if (selectedModel === 'full') {
+                    await faceapi.nets.ssdMobilenetv1.loadFromUri('models');
+                }
+
+                await faceapi.nets.faceLandmark68Net.loadFromUri('models');
+                await faceapi.nets.faceRecognitionNet.loadFromUri('models');
+document.getElementById('log').innerHTML += 'Models loaded successfully. Loading image...<br>';
+
+                // Load and display the selected image
+                const img = new Image();
+                img.onload = async function () {
+                    const displaySize = { width: img.width, height: img.height };
+                    faceapi.matchDimensions(img, displaySize);
+                    document.getElementById('log').innerHTML += '<br>Image loaded successfully. Detecting faces...<br>';
+
+                    // Detect faces using the selected model
+                    const detections = await (selectedModel === 'tiny' ?
+                        faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors() :
+                        faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors());
+
+                    // Limit the number of detected faces to the selected maxFaces
+                    const limitedDetections = detections.slice(0, maxFaces);
+
+                    document.getElementById('log').innerHTML += `Detected ${limitedDetections.length} face(s).<br><br>Try selecting the 'Full Version Face Detector Model' if an incorrect number of faces is detected!`;
+
+                    // Display only the extracted detected faces
+                    const facesContainer = document.getElementById('faces');
+                    await Promise.all(limitedDetections.map(async (face, i) => {
+                        const canvas = faceapi.createCanvasFromMedia(img);
+                        const faceCanvas = faceapi.createCanvasFromMedia(img);
+                        const faceContext = faceCanvas.getContext('2d');
+
+                        // Calculate the region to capture, including the entire head
+                        const x = Math.max(0, face.detection.box.x - margin * face.detection.box.width);
+                        const y = Math.max(0, face.detection.box.y - margin * face.detection.box.height);
+                        const width = Math.min(img.width - x, (1 + margin * 2) * face.detection.box.width);
+                        const height = Math.min(img.height - y, (1 + margin * 2) * face.detection.box.height);
+
+                        faceContext.drawImage(img, x, y, width, height, 0, 0, faceCanvas.width, faceCanvas.height);
+
+                        // Resize the face image
+                        const ratio = 150 / width; // Use the width for resizing
+                        const resizedWidth = 150;
+                        const resizedHeight = height * ratio;
+
+                        faceContext.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                        faceCanvas.width = resizedWidth;
+                        faceCanvas.height = resizedHeight;
+
+                        faceContext.drawImage(img, x, y, width, height, 0, 0, resizedWidth, resizedHeight);
+
+                        // Create an image element for each face and append it to the faces container
+                        const faceImage = document.createElement('img');
+                        faceImage.src = faceCanvas.toDataURL();
+                        facesContainer.appendChild(faceImage);
+                    }));
+                };
+
+                // Set the image source
+                img.src = selectedImage;
+
+            } catch (error) {
+                // Handle errors
+                alert(`Error: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // Run the face detection function when the window has loaded
+        window.onload = () => {
+            changeImageAndDetect();
+        };
+    </script>
+</body>
+</html>
