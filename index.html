@@ -23,17 +23,18 @@
     <div>
         <label for="modelToggle"><br>Select Model:</label>
         <select id="modelToggle" onchange="toggleModelAndDetect()">
+            <option value="full">Full Version Face Detector Model (slow but more accurate)</option>
             <option value="tiny">Tiny Face Detector Model (fast but less accurate)</option>
-            <option value="full">Full Version Face Detector Model (slow but very accurate)</option>
+            
         </select>
     </div>
     <div>
         <label for="maxFacesSlider">Adjust Max Faces Detection Capacity :</label>
-        <input type="range" id="maxFacesSlider" min="1" max="30" value="12" step="1" onchange="changeMaxFaces()">
-        <span id="maxFacesValue">12</span>
+        <input type="range" id="maxFacesSlider" min="1" max="30" value="15" step="1" onchange="changeMaxFaces()">
+        <span id="maxFacesValue">15</span>
     </div>
     <div>
-        <label for="marginSlider">Adjust Crop Margin (a larger value indicates a larger region of the face surrounding the captured image):</label>
+        <label for="marginSlider">Adjust Crop Margin (a larger value indicates a larger region for capturing the image of the face, including its surroundings):</label>
         <input type="range" id="marginSlider" min="0" max="1" value="0.5" step="0.1" onchange="changeMargin()">
         <span id="marginValue">0.5</span>
     </div>
@@ -41,9 +42,9 @@
     <div id="faces"></div>
 
     <script>
-        let selectedModel = 'tiny';
+        let selectedModel = 'full';
         let selectedImage = 'faces1.jpg';
-        let maxFaces = 12;
+        let maxFaces = 15;
         let margin = 0.5;
 
            async function changeImageAndDetect() {
@@ -116,7 +117,7 @@ document.getElementById('log').innerHTML += 'Models loaded successfully. Loading
                     // Limit the number of detected faces to the selected maxFaces
                     const limitedDetections = detections.slice(0, maxFaces);
 
-                    document.getElementById('log').innerHTML += `Detected ${limitedDetections.length} face(s).<br><br>Try selecting the "Full Version Face Detector Model" or adjust the "Max Faces Detection Capacity" value if an incorrect number of faces is detected!`;
+                    document.getElementById('log').innerHTML += `Detected ${limitedDetections.length} face(s).<br><br>Try selecting the "Full Version Face Detector Model", adjust the "Max Faces Detection Capacity", or adjust the "Crop Margin" values if an incorrect number of faces is detected!`;
 
                     // Display only the extracted detected faces
                     const facesContainer = document.getElementById('faces');
