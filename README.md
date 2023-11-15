@@ -10,7 +10,7 @@ This project employs the `face-api.js` library to perform real-time face detecti
 
 ## Demo
 
-Check out the live demo <a href="https://yeerock.000webhostapp.com/face-extractor/index.html" target="_blank">here</a> to see the face detection and extraction in action.
+Check out the live demo [here](https://yeerock.000webhostapp.com/face-extractor/index.html) (opens in a new tab) to see the face detection and extraction in action.
 
 ## Getting Started
 
